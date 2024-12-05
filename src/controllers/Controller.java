@@ -4,90 +4,115 @@ import models.Person;
 import views.View;
 
 public class Controller {
+    private View view;
+    private SortingMethods sortingMethods;
+    private SearchMethods searchMethods;
+    private Person[] personas;
 
-        private View view;
-        private SortingMethods sortingmethods;
-        private SearchMethods searchmethods;
+    public Controller(View view, SortingMethods sortingMethods, SearchMethods searchMethods){
+        this.view = view;
+        this.sortingMethods = sortingMethods;
+        this.searchMethods = searchMethods;             
+    }
 
-        private Person[] personas;
+    public void start() {
+        int op = 0;
+        do {
+            op = view.showMenu();
+            switch (op) {
+                case 1:
+                    inputPersons();
+                    break;
+                case 2:
+                    addPersons();
+                    break;
+                case 3:
+                    sortPersons();
+                    break;
+                case 4:
+                    searchPerson();
+                    break;
+                case 100:
+                    System.out.println("Adios");
+                    break;
+                default:
+                    System.out.println("Opcion no valida.");
+                    break;
+            }
+        } while (op != 100);
+    }
 
-        public Controller(View view,
-                        SortingMethods sortingmethods, 
-                        SearchMethods searchmethods){
-                
-            this.view = view;
-            this.sortingmethods = sortingmethods;
-            this.searchmethods = searchmethods;
+    public void inputPersons() {
+        int numPersons = view.inputCantPerson();
 
-            System.out.println("CONTROLADOR CREADO");
-                
+        if (numPersons <= 0) {
+            System.out.println("Error: No puede ingresar un numero negativo o cero de personas.");
+            return;
         }
 
-        public void start(){
-            int op=0;
-            do{
-                op = view.showMenu();
-                switch (op) {
-                    case 1:
-                        inputPerson();
-                        break;
-                    case 2:
-                        addPerson();
-                        break;
-                    case 3:
-                        sortPersons();
-                        break;
-                    case 100:
-                        System.out.println("Adios");
-                        break;
-                    default:
-                        System.out.println("Opcion no valida.");
-                        break;
-                }
-            }while(op !=0);
+        personas = new Person[numPersons];
+        for (int i = 0; i < numPersons; i++) {
+            personas[i] = view.inputPerson();
+        }
+    }
+
+    public void addPersons() {
+        if (personas == null) {
+            System.out.println("Primero debe ingresar personas.");
+            return;
+        }
+        
+        int numToAdd = view.inputCantPerson();
+        Person[] newPersonas = new Person[personas.length + numToAdd];
+        System.arraycopy(personas, 0, newPersonas, 0, personas.length);
+
+        for (int i = personas.length; i < newPersonas.length; i++) {
+            newPersonas[i] = view.inputPerson();
+        }
+        personas = newPersonas;
+    }
+
+    public void sortPersons() {
+        if (personas == null || personas.length == 0) {
+            view.showMessage("No puede ordenar sin ingresar personas primero.");
+            return;
         }
 
-        public void sortPersons(){
-            int sortingOption = view.selectSortingmethod();
+        int method = view.selectSortingmethod();
+        switch (method) {
+            case 1:
+                sortingMethods.sortByNameWithBubble(personas);
+                break;
+            case 2:
+                sortingMethods.sortByNameWithSelectionDes(personas);
+                break;
+            case 3:
+                sortingMethods.sortByAgeWithInsertion(personas);
+                break;
+            case 4:
+                sortingMethods.sortByNameWithInsertion(personas);
+                break;
+            default:
+                System.out.println("Metodo no valido.");
+        }
+        view.displayPersons(personas);
+    }
 
-            if (sortingOption==1) {
-                sortingmethods.sortByNameWithBubble(personas);
-                
-            }else if(sortingOption==2){
-                sortingmethods.sorByNameWithSelection(personas);
-            }else{
-                view.showMessage("Opcion invalida");
-            }
+    public void searchPerson() {
+        if (personas == null || personas.length == 0) {
+            view.showMessage("No puede buscar sin ingresar personas primero.");
+            return;
         }
 
-        public void inputPerson(){
-            int numPersonas = view.inputInt("Ingrese el numero de personas: ");
-            personas = new Person[numPersonas];
-            for(int i=0; i<numPersonas;i++){
-                personas[i] = view.inputPerson();
-
-            }
+        int criterion = view.selectSearchCriterion();
+        if (criterion == 1) {
+            String name = view.inputName();
+            view.displaySearchResult(searchMethods.binarySearchByName(personas, name));
+        } else if (criterion == 2) {
+            int age = view.inputAge();
+            view.displaySearchResult(searchMethods.binarySearchByAge(personas, age));
+        } else {
+            System.out.println("Criterio no valido.");
         }
-
-        public void addPerson(){
-            if(personas == null){
-                view.showMessage("No existe, ingrese las personas por primera vez");
-                inputPerson();
-            }
-
-            int numPersonas = view.inputInt("Ingrese el numero de personas a adicionar: ");
-
-            Person[] personasTotales = new Person[personas.length + numPersonas];
-
-            for(int i=0; i<personas.length;i++){
-                personasTotales[i] = personas[i];
-            }
-
-            for(int i= personas.length; i<personasTotales.length;i++){
-                personasTotales[i] = view.inputPerson();
-
-            }
-
-            personas = personasTotales;
-        }
+    }
 }
